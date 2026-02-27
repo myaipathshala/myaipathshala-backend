@@ -22,6 +22,8 @@ class Settings(BaseSettings):
         "https://myaipathshala.vercel.app",
         "https://myaipathshala-7p60rpbdw-myaipathshalas.vercel.app",
         "https://myaipathshala-frontend.vercel.app",
+        "https://www.myaipathshala.com",
+        "https://myaipathshala.com",
     ]
     ENV: str = "development"
     SECRET_KEY: str = "change-me-in-production-use-a-strong-random-key"
