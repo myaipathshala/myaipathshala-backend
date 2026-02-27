@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+pydantic-settings
+pytest
+gunicorn
+psycopg2-binary
+sqlalchemy>=2.0
