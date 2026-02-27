@@ -12,12 +12,24 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.endpoints import learning
 
-app = FastAPI(title="MYAIPATHSHALA Learning Engine API", version="0.1")
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+from app.core.config import settings
 
-# Enable CORS for frontend development
+app = FastAPI(
+    title="MYAIPATHSHALA Learning Engine API", 
+    version="0.1",
+    docs_url="/docs" if not settings.is_production else None,
+    redoc_url="/redoc" if not settings.is_production else None,
+)
+
+# Enforce HTTPS in production
+if settings.is_production:
+    app.add_middleware(HTTPSRedirectMiddleware)
+
+# Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all origins for MVP
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
