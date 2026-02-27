@@ -12,7 +12,12 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
-DOC_ROOT = "doc"
+import logging
+
+# Configure minimal logging for serverless
+logger = logging.getLogger("planner")
+
+DOC_ROOT = "/tmp/doc"
 SUBFOLDERS = ["implementation", "task", "Walkthrough"]
 
 INTENT_TITLES = {
@@ -27,44 +32,36 @@ INTENT_TITLES = {
 
 class Planner:
     """
-    The Planning System for AiTDL v2.0 STABLE.
-    Generates three mandatory documents for every intent with enterprise formatting.
+    Hardened Stateless Planning System for AiTDL v2.0.
+    Zero Disk Dependency - Optimized for Serverless Cold Starts.
     """
-    DOC_ROOT = DOC_ROOT
-    VERSION = "1.5"
-    STATUS = "STABLE"
-
     def __init__(self):
-        self._ensure_directories()
+        self.VERSION = "1.7"
+        self.STATUS = "HARDENED"
 
-    def _ensure_directories(self):
-        if not os.path.exists(DOC_ROOT):
-            os.makedirs(DOC_ROOT)
-        for folder in SUBFOLDERS:
-            path = os.path.join(DOC_ROOT, folder)
-            if not os.path.exists(path):
-                os.makedirs(path)
-
-    def generate_documentation_set(self, intent: str, params: Dict[str, Any]) -> Dict[str, str]:
+    def generate_documentation_set(self, intent: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Generates mandatory set of 3 documents.
-        Returns a dictionary of paths.
+        Generates mandatory set of 3 documents in-memory.
+        Returns a dictionary containing raw content for database persistence.
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        paths = {}
+        response = {
+            "intent": intent,
+            "timestamp": timestamp,
+            "documents": {}
+        }
 
         for folder in SUBFOLDERS:
-            filename = f"{intent}_{timestamp}.md"
-            filepath = os.path.join(DOC_ROOT, folder, filename)
-            
+            doc_type = folder.lower()
             content = self._create_template(folder, intent, params, timestamp)
             
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(content)
-            
-            paths[f"{folder.lower()}_path"] = filepath
+            response["documents"][doc_type] = {
+                "filename": f"{intent}_{timestamp}.md",
+                "status": "in-memory",
+                "content": content
+            }
 
-        return paths
+        return response
 
     def _create_template(self, doc_type: str, intent: str, params: Dict[str, Any], timestamp: str) -> str:
         intent_title = INTENT_TITLES.get(intent, intent.replace("_", " ").title())
@@ -154,4 +151,10 @@ The following architectural considerations warrant stakeholder review:
 """
         return header + body
 
-planner = Planner()
+def get_planner() -> Planner:
+    """Lazy getter for Planner instance to safely support serverless imports."""
+    try:
+        return Planner()
+    except Exception as e:
+        logger.error(f"Failed to initialize Planner: {e}")
+        raise

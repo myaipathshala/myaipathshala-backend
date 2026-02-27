@@ -78,3 +78,23 @@ class UserProgress(Base):
 
     user = relationship("User", back_populates="progress")
     lesson = relationship("Lesson", back_populates="progress")
+
+class ExecutionLog(Base):
+    """
+    Persistent store for AiTDL execution metadata and generated documentation.
+    Replaces local disk-based doc/EXECUTION_LOG.md.
+    """
+    __tablename__ = "execution_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    intent = Column(String, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    status = Column(String) # success, error, violation
+    integrity_verified = Column(Boolean, default=True)
+    structure_validated = Column(Boolean, default=True)
+    
+    # Store doc contents locally instead of disk paths
+    implementation_content = Column(Text, nullable=True)
+    task_content = Column(Text, nullable=True)
+    walkthrough_content = Column(Text, nullable=True)
+    
+    error_message = Column(Text, nullable=True)

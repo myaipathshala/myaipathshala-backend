@@ -8,56 +8,47 @@ Licensed under the MIT License.
 See LICENSE file in the project root for full license information.
 """
 
-import os
+import logging
 from datetime import datetime
 from typing import Any, Dict
+from app.core.database import SessionLocal
+from app.core.models import ExecutionLog
 
-LOG_FILE = "doc/EXECUTION_LOG.md"
+logger = logging.getLogger("execution_logger")
 
 class ExecutionLogger:
     """
-    Handles persistent chronological logging of AiTDL intent executions.
+    Handles persistent database logging of AiTDL intent executions.
+    Replaces local disk-based doc/EXECUTION_LOG.md.
     """
 
-    def __init__(self):
-        self._ensure_log_file()
-
-    def _ensure_log_file(self):
-        directory = os.path.dirname(LOG_FILE)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        if not os.path.exists(LOG_FILE):
-            with open(LOG_FILE, "w", encoding="utf-8") as f:
-                f.write("# AiTDL Execution Audit Log\n\n")
-
-    def log_execution(self, intent: str, doc_paths: Dict[str, str], status: str):
+    def log_execution(self, intent: str, doc_data: Dict[str, Any], status: str, error_message: str = None):
         """
-        Appends a formatted log entry to EXECUTION_LOG.md.
+        Persists a formatted log entry to the database.
         """
-        timestamp = datetime.now().isoformat()
-        version = "1.6 STABLE"
-        
-        # Determine integrity/structure status based on overall status
-        integrity_status = "verified" if status == "success" else "unknown"
-        structure_status = "validated" if status == "success" else "unknown"
-
-        log_entry = f"""
---------------------------------------------------
-Intent: {intent}
-Version: {version}
-Timestamp: {timestamp}
-
-Generated Files:
-- {doc_paths.get('implementation_path', 'N/A')}
-- {doc_paths.get('task_path', 'N/A')}
-- {doc_paths.get('walkthrough_path', 'N/A')}
-
-Status: {status}
-Integrity: {integrity_status}
-Structure: {structure_status}
---------------------------------------------------
-"""
-        with open(LOG_FILE, "a", encoding="utf-8") as f:
-            f.write(log_entry)
+        db = SessionLocal()
+        try:
+            docs = doc_data.get("documents", {})
+            log_entry = ExecutionLog(
+                intent=intent,
+                status=status,
+                integrity_verified=(status == "success"),
+                structure_validated=(status == "success"),
+                implementation_content=docs.get("implementation", {}).get("content"),
+                task_content=docs.get("task", {}).get("content"),
+                walkthrough_content=docs.get("walkthrough", {}).get("content"),
+                error_message=error_message
+            )
+            db.add(log_entry)
+            db.commit()
+            logger.info(f"Execution logged to DB: {intent} [{status}]")
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Stateless fallback: Failed to log to DB: {e}")
+            # Fallback to standard logging for serverless safety
+            print(f"--- [FALLBACK LOG] ---")
+            print(f"Intent: {intent} | Status: {status} | Error: {error_message}")
+        finally:
+            db.close()
 
 execution_logger = ExecutionLogger()
