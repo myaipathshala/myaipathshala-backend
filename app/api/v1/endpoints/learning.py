@@ -11,6 +11,7 @@ See LICENSE file in the project root for full license information.
 from fastapi import APIRouter, Depends
 from app.core.ai_agent import ai_agent
 from app.core.database import init_db
+from app.schemas.identity import IdentityRequest
 
 router = APIRouter()
 
@@ -18,11 +19,21 @@ router = APIRouter()
 init_db()
 
 @router.post("/identity")
-async def identity_actions(params: dict):
+async def identity_actions(request: IdentityRequest):
     """
-    Orchestrated Identity Actions (register, etc.)
+    Orchestrated Identity Actions (register, login, verify)
     """
+    # Merge action into parameters for the AIAgent layer
+    params = request.params.copy()
+    params["action"] = request.action
     return await ai_agent.execute_command("manage_identity", params)
+
+@router.get("/identity")
+async def identity_health():
+    """
+    Health check and connectivity test for Identity route.
+    """
+    return {"status": "ok", "route": "/api/v1/identity", "methods": ["GET", "POST"]}
 
 @router.post("/learning")
 async def learning_actions(params: dict):
