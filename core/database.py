@@ -18,7 +18,12 @@ SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-connect_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
+# Ensure SSL for production PostgreSQL
+connect_args = {}
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
+    connect_args["check_same_thread"] = False
+elif settings.is_production:
+    connect_args["sslmode"] = "require"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args=connect_args

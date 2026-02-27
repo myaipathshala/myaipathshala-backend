@@ -18,13 +18,17 @@ from app.core.config import settings
 app = FastAPI(
     title="MYAIPATHSHALA Learning Engine API", 
     version="0.1",
-    docs_url="/docs" if not settings.is_production else None,
-    redoc_url="/redoc" if not settings.is_production else None,
+    docs_url="/docs",
+    redoc_url="/redoc",
 )
 
 # Enforce HTTPS in production
 if settings.is_production:
     app.add_middleware(HTTPSRedirectMiddleware)
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "environment": settings.ENV}
 
 # Enable CORS
 app.add_middleware(
