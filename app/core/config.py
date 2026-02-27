@@ -15,7 +15,12 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "myaipathshala-fastapi-starter"
     API_V1_STR: str = "/api/v1"
     DATABASE_URL: str = "sqlite:///./myaipathshala.db"
-    CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://127.0.0.1:5173", "https://myaipathshala.vercel.app"]
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:5173", 
+        "http://127.0.0.1:5173", 
+        "https://myaipathshala.vercel.app",
+        "https://myaipathshala-7p60rpbdw-myaipathshalas.vercel.app"
+    ]
     ENV: str = "development"
 
     @property
